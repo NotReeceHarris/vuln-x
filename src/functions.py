@@ -8,81 +8,90 @@ import urllib.parse
 from bs4 import BeautifulSoup
 import re
 
+import base64
+import sys
+import json
+
 #====================================================================================================
 
 async def check_js(js_url):
-    if js_url.startswith("//"):
-        js_url = "https:" + js_url
+    output = []
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(js_url) as resp:
-            response_text = await resp.text()
-    # Check for calls to functions that modify the prototype of an object
-    prototype_pollution_patterns = [
-        (r"Object\.defineProperty", "Object.defineProperty"), 
-        (r"Object\.setPrototypeOf", "Object.setPrototypeOf"), 
-        (r"Object\.create", "Object.create")
-    ]
-    for pattern, method in prototype_pollution_patterns:
-        if re.search(pattern, response_text):
-            print(f"Possible prototype pollution detected in {js_url} using {method}")
-            return
+    try:
+        if js_url.startswith("//"):
+            js_url = "https:" + js_url
 
-    # Check for calls to functions that can be used to bypass type checks
-    type_check_bypass_patterns = [
-        (r"eval", "eval"), 
-        (r"Function", "Function"), 
-        (r"setTimeout", "setTimeout")
-    ]
-    for pattern, method in type_check_bypass_patterns:
-        if re.search(pattern, response_text):
-            print(f"Possible type check bypass detected in {js_url} using {method}")
-            return
+        async with aiohttp.ClientSession() as session:
+            async with session.get(js_url) as resp:
+                response_text = await resp.text()
+        # Check for calls to functions that modify the prototype of an object
+        prototype_pollution_patterns = [
+            (r"Object\.defineProperty", "Object.defineProperty"), 
+            (r"Object\.setPrototypeOf", "Object.setPrototypeOf"), 
+            (r"Object\.create", "Object.create")
+        ]
+        for pattern, method in prototype_pollution_patterns:
+            if re.search(pattern, response_text):
+                output.append(f'prototype pollution {js_url} | {method}')
+                return
 
-    # Check for calls to functions that can be used to inject malicious code
-    malicious_code_injection_patterns = [
-        (r"document\.write", "document.write"), 
-        (r"innerHTML", "innerHTML")
-    ]
-    for pattern, method in malicious_code_injection_patterns:
-        if re.search(pattern, response_text):
-            print(f"Possible malicious code injection detected in {js_url} using {method}")
-            return
+        # Check for calls to functions that can be used to bypass type checks
+        type_check_bypass_patterns = [
+            (r"eval", "eval"), 
+            (r"Function", "Function"), 
+            (r"setTimeout", "setTimeout")
+        ]
+        for pattern, method in type_check_bypass_patterns:
+            if re.search(pattern, response_text):
+                output.append(f'type check bypass {js_url} | {method}')
+                return
 
-    # Check for calls to functions that can be used to access sensitive information
-    sensitive_information_access_patterns = [
-        (r"window\.location", "window.location"), 
-        (r"document\.cookie", "document.cookie"), 
-        (r"localStorage", "localStorage")
-    ]
-    for pattern, method in sensitive_information_access_patterns:
-        if re.search(pattern, response_text):
-            print(f"Possible sensitive information access detected in {js_url} using {method}")
-            return
+        # Check for calls to functions that can be used to inject malicious code
+        malicious_code_injection_patterns = [
+            (r"document\.write", "document.write"), 
+            (r"innerHTML", "innerHTML")
+        ]
+        for pattern, method in malicious_code_injection_patterns:
+            if re.search(pattern, response_text):
+                output.append(f'malicious code injection {js_url} | {method}')
+                return
 
-    # Check for user input being used in a way that may cause code pollution
-    user_input_patterns = [
-        (r"\.innerHTML\s*=", "innerHTML="),  # Setting innerHTML with user input
-        (r"\.outerHTML\s*=", "\.outerHTML\s*="),  # Setting outerHTML with user input
-        (r"\.appendChild\(", "appendChild\("),  # Appending user input as a child element
-        (r"\.insertBefore\(", "insertBefore\("),  # Inserting user input before an element
-        (r"\.replaceChild\(", "replaceChild\("),  # Replacing an element with user input
-        (r"\.createElement\(", "createElement\("),  # Creating an element with user input
-        (r"\.createTextNode\(", "createTextNode\("),  # Creating a text node with user input
-        (r"\.write\(", "write\("),  # Writing user input to the document
-        (r"\.execCommand\(", "execCommand(")  # Executing a command with user input
-    ]
-    for pattern, method in user_input_patterns:
-        if re.search(pattern, response_text):
-            print(f"Possible code pollution detected in {js_url} due to user input using {method}")
-            return
+        # Check for calls to functions that can be used to access sensitive information
+        sensitive_information_access_patterns = [
+            (r"window\.location", "window.location"), 
+            (r"document\.cookie", "document.cookie"), 
+            (r"localStorage", "localStorage")
+        ]
+        for pattern, method in sensitive_information_access_patterns:
+            if re.search(pattern, response_text):
+                output.append(f'sensitive information access {js_url} | {method}')
+                return
 
-    print(f"No prototype pollution detected in {js_url}")
+        # Check for user input being used in a way that may cause code pollution
+        user_input_patterns = [
+            (r"\.innerHTML\s*=", "innerHTML="),  # Setting innerHTML with user input
+            (r"\.outerHTML\s*=", "\.outerHTML\s*="),  # Setting outerHTML with user input
+            (r"\.appendChild\(", "appendChild\("),  # Appending user input as a child element
+            (r"\.insertBefore\(", "insertBefore\("),  # Inserting user input before an element
+            (r"\.replaceChild\(", "replaceChild\("),  # Replacing an element with user input
+            (r"\.createElement\(", "createElement\("),  # Creating an element with user input
+            (r"\.createTextNode\(", "createTextNode\("),  # Creating a text node with user input
+            (r"\.write\(", "write\("),  # Writing user input to the document
+            (r"\.execCommand\(", "execCommand(")  # Executing a command with user input
+        ]
+        for pattern, method in user_input_patterns:
+            if re.search(pattern, response_text):
+                output.append(f'code pollution {js_url} | {method}')
+                return
+    except:
+        pass
     
 
 async def scan_for_prototype_pollution(url):
     # Send a request to the URL and get the response
     response = requests.get(url)
+
+    output = []
 
     # Parse the response HTML using BeautifulSoup
     soup = BeautifulSoup(response.text, "html.parser")
@@ -106,7 +115,9 @@ async def scan_for_prototype_pollution(url):
         for task in asyncio.as_completed(tasks):
             result = await task
             if result:
-                return result
+                output.extend(result)
+    
+    return output
 
 async def detect_prototype_pollution(url):
     url = validate_and_fix_url(url)
@@ -121,7 +132,6 @@ async def check_hash(stored_hash, line):
 
     # Compare the hashed line to the stored hash
     if hashed_line == stored_hash:
-        print("Insecure cryptographic storage detected: %s" % line.strip())
         return line.strip()
 
 async def run_checks(stored_hash):
@@ -144,6 +154,8 @@ async def detect_insecure_cryptographic_storage(url):
     session = requests.Session()
     response = session.get(url)
 
+    output = []
+
     # Check the Authorization header, session, and cookies for JWTs
     jwt_tokens = []
     authorization = response.headers.get("Authorization")
@@ -159,17 +171,15 @@ async def detect_insecure_cryptographic_storage(url):
     for jwt_token in jwt_tokens:
         try:
             jwt_decoded = jwt.decode(jwt_token, verify=False)
-            print("JWT found:", jwt_decoded)
         except jwt.exceptions.DecodeError:
-            print("Invalid JWT")
             continue
         result = await run_checks(jwt_decoded)
         if result:
-            print("Insecure cryptographic storage detected in JWT: %s" % result)
+            output.append('insecure jwt')
         else:
-            print("Secure cryptographic storage detected in JWT")
-    if not jwt_tokens:
-        print("JWT not found")
+            output.append('secure jwt')
+
+    return output
 
 async def check_unsecure_jwt(url):
     # Execute the coroutine and wait for the result
@@ -203,17 +213,15 @@ def detect_cors_misconfiguration(url):
     # Send a request to the target URL with an Origin header set to a different domain
     response = requests.get(url, headers={"Origin": "http://attacker.com"})
 
+    output = []
+
     # Check the Access-Control-Allow-Origin header in the response
     allow_origin = response.headers.get("Access-Control-Allow-Origin")
     if allow_origin:
         # If the header is present, check if it allows all domains or a specific domain
-        if allow_origin == "*":
-            print("CORS misconfiguration detected: All domains allowed")
-        else:
-            print("CORS misconfiguration detected: %s allowed" % allow_origin)
-    else:
-        # If the header is not present, CORS is correctly configured
-        print("CORS correctly configured")
+        output.append(allow_origin)
+
+    return output
 
 #====================================================================================================
 
@@ -227,6 +235,8 @@ def detect_xss(url):
 
     # Search the response text for potential XSS payloads
     matches = re.finditer(xss_regex, response.text)
+
+    output = []
 
     # Print the line number and payload of each match
     for match in matches:
@@ -244,7 +254,7 @@ def detect_xss(url):
         # Check if the payload is reflected in the response
         reflected_payload = payload.replace("<", "&lt;").replace(">", "&gt;")
         if reflected_payload in response.text:
-            print("Reflected XSS vulnerability suspected")
+            output.append("Reflected XSS vulnerability")
         else:
             # If the payload is not reflected, check if the payload is stored in a database
             payload_injection_url = url + "?" + payload
@@ -252,9 +262,9 @@ def detect_xss(url):
 
             # If the response status code is different after injecting the payload, the vulnerability may be stored XSS
             if injection_response.status_code != response.status_code:
-                print("Stored XSS vulnerability suspected")
-            else:
-                print("Reflected or stored XSS vulnerability not detected")
+                output.append("Stored XSS vulnerability")
+    
+    return output
 
 #====================================================================================================
 
@@ -280,29 +290,40 @@ def check_form_security(url):
         # Check if the form includes a CSRF token
         csrf_token = form.find("input", {"name": "csrf_token"})
         if csrf_token:
-            print("Form action:", action)
-            print("Form method:", method)
-            print("CSRF token found:", csrf_token["value"])
+            output.append({
+                'action': base64.b64encode(action.encode()).decode('ascii') if action else None,
+                'method': base64.b64encode(method.encode()).decode('ascii') if method else None,
+                'csrf_token': base64.b64encode(csrf_token["value"].encode()).decode('ascii') if csrf_token["value"] else None,
+                'secure': True
+            })
         else:
             # If no CSRF token is found, run a simple SQL injection check
             # First, check if the action URL is a relative or absolute URL
-            if action.startswith("http"):
-                inject_test_url = action + "?' or '1'='1"
-            else:
-                # If the action URL is relative, prepend the target URL to create a full URL
-                inject_test_url = url + action + "?' or '1'='1"
+            if action != None:
+                if action.startswith("http"):
+                    inject_test_url = action + "?' or '1'='1"
+                else:
+                    # If the action URL is relative, prepend the target URL to create a full URL
+                    inject_test_url = url + action + "?' or '1'='1"
 
-            inject_test_response = requests.get(inject_test_url)
+                inject_test_response = requests.get(inject_test_url)
 
-            # If the response status code is different after injecting the test string, the form may be vulnerable to SQL injection
-            if inject_test_response.status_code != response.status_code:
-                print("Form action:", action)
-                print("Form method:", method)
-                print("SQL injection vulnerability suspected")
-            else:
-                print("Form action:", action)
-                print("Form method:", method)
-                print("SQL injection vulnerability not suspected")
+                # If the response status code is different after injecting the test string, the form may be vulnerable to SQL injection
+                if inject_test_response.status_code != response.status_code:
+                    output.append({
+                        'action': base64.b64encode(action.encode()).decode('ascii') if action else None,
+                        'method': base64.b64encode(method.encode()).decode('ascii') if method else None,
+                        'secure': False,
+                        'sql_injection': True
+                    })
+                else:
+                    output.append({
+                        'action': base64.b64encode(action.encode()).decode('ascii') if action else None,
+                        'method': base64.b64encode(method.encode()).decode('ascii') if method else None,
+                        'secure': True,
+                        'sql_injection': False
+                    })
+    return output
 
 #====================================================================================================
 
@@ -347,6 +368,20 @@ def is_shopify_site(url):
             return True
     
     return False
+#====================================================================================================
+
+def detect_platform(target):
+    
+    if is_wordpress_site(target):
+        return "Wordpress"
+    elif is_shopify_site(target):
+        return "Shopify"
+    else:
+        url = validate_and_fix_url(target)
+        response = requests.get(url)
+        if "x-powered-by" in response.headers:
+            return requests.get(url).headers["x-powered-by"]
+
 
 #====================================================================================================
 
@@ -376,8 +411,40 @@ def validate_and_fix_url(url):
             # The fixed URL is still invalid, so return an error message
             return "Error: Unable to fix invalid URL"
 
+
+def full_scan(target):
+
+
+    site = target
+    platform = detect_platform(target)
+    prototype_pollution = asyncio.run(detect_prototype_pollution(target))
+    unsecure_jwt = asyncio.run(check_unsecure_jwt(target))
+    xss = detect_xss(target)
+    cors = detect_cors_misconfiguration(target)
+    form_security = check_form_security(target)
+    vulnerabilities = 0
+
+    if prototype_pollution != None:
+        for x in prototype_pollution:
+            vulnerabilities += 1
+    
+    if xss != None:
+        for x in xss:
+            vulnerabilities += 1
+
+    if form_security != None:
+        for x in form_security:
+            if x['secure'] == False:
+                vulnerabilities += 1
+    
+    if unsecure_jwt:
+        vulnerabilities += 1
+
+
+    print( json.dumps({'site': site,'platform': platform,'prototype_pollution': prototype_pollution,'unsecure_jwt': unsecure_jwt,'xss': xss,'cors': cors,'form_security': form_security,'vulnerabilities': vulnerabilities}))
+
 if __name__ == "__main__":
-    target = 'https://nativelifestyle.co.uk/'
+    target = sys.argv[1]
 
     # asyncio.run(detect_prototype_pollution(target))
     # asyncio.run(check_unsecure_jwt(target))
@@ -387,3 +454,5 @@ if __name__ == "__main__":
     # detect_xss(target)
     # detect_cors_misconfiguration(target)
     # form_scanner(target)
+
+    full_scan(target)

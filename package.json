@@ -1,0 +1,21 @@
+{
+  "name": "vuln-x",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install": "cd src && npm install && python -m pip install -r requirements.txt",
+    "start": "cd src && npm start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NotReeceHarris/vuln-x.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NotReeceHarris/vuln-x/issues"
+  },
+  "homepage": "https://github.com/NotReeceHarris/vuln-x#readme"
+}

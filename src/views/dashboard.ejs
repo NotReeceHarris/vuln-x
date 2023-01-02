@@ -1,0 +1,135 @@
+<%- include('header') %>
+
+<div class="grid grid-cols-12 gap-6">
+                        <div class="grid grid-cols-12 col-span-12 gap-6 xxl:col-span-9">
+                            <div class="col-span-12 mt-8">
+                                <div class="flex items-center h-10 intro-y">
+                                    <h2 class="mr-5 text-lg font-medium truncate">Dashboard</h2>
+                                </div>
+                                <div class="grid grid-cols-12 gap-6 mt-5">
+                                    <a class="transform  hover:scale-105 transition duration-300 shadow-xl rounded-lg col-span-12 sm:col-span-6 xl:col-span-3 intro-y bg-white"
+                                        href="#">
+                                        <div class="p-5">
+                                            <div class="flex justify-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-7 w-7 text-green-400"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                            </div>
+                                            <div class="ml-2 w-full flex-1">
+                                                <div>
+                                                    <div class="mt-3 text-3xl font-bold leading-8"><%= rows.length %></div>
+
+                                                    <div class="mt-1 text-base text-gray-600">Sites scanned</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <a class="transform  hover:scale-105 transition duration-300 shadow-xl rounded-lg col-span-12 sm:col-span-6 xl:col-span-3 intro-y bg-white"
+                                        href="#">
+                                        <div class="p-5">
+                                            <div class="flex justify-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-7 w-7 text-blue-400"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                                            </div>
+                                            <div class="ml-2 w-full flex-1">
+                                                <div>
+                                                    <div class="mt-3 text-3xl font-bold leading-8"><%= rows.reduce((acc, obj) => obj.vuln_rating > 10 ? acc + 1 : acc, 0) %></div>
+
+                                                    <div class="mt-1 text-base text-gray-600">Vulnerable sites</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <a class="transform  hover:scale-105 transition duration-300 shadow-xl rounded-lg col-span-12 sm:col-span-6 xl:col-span-3 intro-y bg-white"
+                                        href="#">
+                                        <div class="p-5">
+                                            <div class="flex justify-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-7 w-7 text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg>
+                                            </div>
+                                            <div class="ml-2 w-full flex-1">
+                                                <div>
+                                                    <div class="mt-3 text-3xl font-bold leading-8"><%= rows.reduce((acc, obj) => {
+                                                        const data = JSON.parse(obj.json);
+                                                        return data.vulnerabilities;
+                                                      }, 0) %></div>
+
+                                                    <div class="mt-1 text-base text-gray-600">Suspected vulnrabilities found</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-span-12 mt-5">
+                                <div class="grid gap-2 grid-cols-1 lg:grid-cols-1">
+                                    <div class="bg-white p-4 shadow-lg rounded-lg">
+                                        <h1 class="font-bold text-base">Table</h1>
+                                        <div class="mt-4">
+                                            <div class="flex flex-col">
+                                                <div class="-my-2 overflow-x-auto">
+                                                    <div class="py-2 align-middle inline-block min-w-full">
+                                                        <div
+                                                            class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg bg-white">
+                                                            <table class="min-w-full divide-y divide-gray-200">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th
+                                                                            class="px-6 py-3 bg-gray-50 text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <div class="flex cursor-pointer">
+                                                                                <span class="mr-2">Site</span>
+                                                                            </div>
+                                                                        </th>
+                                                                        <th
+                                                                            class="px-6 py-3 bg-gray-50 text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <div class="flex cursor-pointer">
+                                                                                <span class="mr-2">Platform</span>
+                                                                            </div>
+                                                                        </th>
+                                                                        <th
+                                                                            class="px-6 py-3 bg-gray-50 text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <div class="flex cursor-pointer">
+                                                                                <span class="mr-2">Vulnrabilities</span>
+                                                                            </div>
+                                                                        </th>
+                                                                        <th
+                                                                            class="px-6 py-3 bg-gray-50 text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                                                            <div class="flex cursor-pointer">
+                                                                                <span class="mr-2">Insecure rating</span>
+                                                                            </div>
+                                                                        </th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody class="bg-white divide-y divide-gray-200">
+                                                                    
+                                                                                        
+<% for (let i = 0; i < rows.length; i++) { %>
+    <tr>
+        <td
+            class="px-6 py-4 whitespace-no-wrap text-sm leading-5">
+            <p><%= rows[i].url %></p>
+        </td>
+        <td
+            class="px-6 py-4 whitespace-no-wrap text-sm leading-5">
+            <p><%= rows[i].platform %></p>
+        </td>
+        <td
+            class="px-6 py-4 whitespace-no-wrap text-sm leading-5">
+            <p><%= JSON.parse(rows[i].json).vulnerabilities %></p>
+        </td>
+        <td
+            class="px-6 py-4 whitespace-no-wrap text-sm leading-5">
+            <p><%= rows[i].vuln_rating %></p>
+        </td>
+  <% } %>
+                                                                    </tr>
+
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+<%- include('footer') %>

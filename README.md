@@ -9,6 +9,7 @@ Deps
 Install Deps
 
 ```
+python -m pip install -r ./src/requirements.txt
 npm install
 ```
 
